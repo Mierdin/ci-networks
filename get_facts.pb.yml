@@ -1,0 +1,22 @@
+---
+- name: "Facts:Netconf"
+  hosts: vsrx
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: gathering info from device
+      junos_get_facts: 
+        user=root
+        passwd=Password1!
+        port=22
+        host={{ inventory_hostname }}
+      register: junos
+
+    - name: version
+      debug: msg={{ junos.facts.version }}
+
+    - name: serial-number
+      debug: msg={{ junos.facts.serialnumber }}
+    - name: test debug
+      debug: "hello"

@@ -1,0 +1,122 @@
+---
+
+- name: "Facts:Netconf"
+  hosts: vsrx
+  connection: local
+  gather_facts: no
+
+  tasks:
+    #- include: tasks/check_nc
+
+    - name: gathering info from device
+      junos_get_facts: 
+        user=root
+        passwd=Password1!
+        port=22
+        host={{ inventory_hostname }}
+      register: junos
+
+    - name: version
+      debug: msg={{ junos.facts.version }}
+
+    - name: serial-number
+      debug: msg={{ junos.facts.serialnumber }}
+
+# =========================================================
+# Setup variables and directories
+# =========================================================
+
+- name: Creating build directories for each host
+  hosts: all
+  connection: local
+  gather_facts: no
+  tasks:
+    - set_fact: 
+        build_dir: "{{ build_dir }}/{{ inventory_hostname }}/tmp"
+        junos_conf: "{{ build_dir }}/{{ inventory_hostname}}/junos.conf"
+    - name: remove host build temp directory
+      file: path={{ build_dir }} state=absent
+    - name: create host build temp directory
+      file: path={{ build_dir }} state=directory
+    # - name: group by firewall role 
+    #   group_by: key=fw_role_{{ FW_role }}
+
+
+
+
+# # =========================================================
+# # Role based config template building
+# # =========================================================
+
+- name: Template-build routers
+  hosts: vsrx
+  connection: local
+  gather_facts: no
+  roles:
+    - router_baseconf
+    - router_ospf  
+    - router_bgp
+
+- name: "Config:Merge:BASE"
+  hosts: all
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: load-merge config file
+      junos_install_config: 
+        user=root
+        passwd=Password1!
+        port=22
+        host={{ inventory_hostname }}
+        file={{ build_dir }}/router_baseconf.conf
+        logfile={{ log_dir }}/{{ inventory_hostname }}.log
+
+- name: "Config:Merge:OSPF"
+  hosts: all
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: load-merge config file
+      junos_install_config: 
+        user=root
+        passwd=Password1!
+        port=22
+        host={{ inventory_hostname }}
+        file={{ build_dir }}/router_ospf.conf
+        logfile={{ log_dir }}/{{ inventory_hostname }}.log
+
+- name: "Config:Merge:BGP"
+  hosts: all
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: overwrite config file
+      junos_install_config: 
+        user=root
+        passwd=Password1!
+        port=22
+        host={{ inventory_hostname }}
+        file={{ build_dir }}/router_bgp.xml
+        logfile={{ log_dir }}/{{ inventory_hostname }}.log
+
+
+# - name: "Facts:OSPF"
+#   hosts: vsrx
+#   connection: local
+#   gather_facts: no
+
+#   tasks:
+#     - name: gathering info from device
+#       junos_get_facts: 
+#         user=root
+#         passwd=Password1!
+#         port=22
+#         host={{ inventory_hostname }}
+#       register: junos
+
+#     - name: ospf
+#       debug: msg={{ item }}
+#       with_dict: junos.facts

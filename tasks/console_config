@@ -1,0 +1,8 @@
+- name: installing config over CONSOLE
+  junos_install_config: host={{ inventory_hostname }}
+    file=build/{{ inventory_hostname }}.conf
+    savedir={{ inv_dir }}
+    console={{ console }}
+    user={{ user | default('root') }}
+    passwd={{ passwd | default(None) }}
+    logfile={{ log_dir }}/{{ inventory_hostname }}.log

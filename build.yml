@@ -1,0 +1,35 @@
+---
+# =========================================================
+# Setup variables and directories
+# =========================================================
+
+- name: Creating build directories for each host
+  hosts: all
+  connection: local
+  gather_facts: no
+  tasks:
+    - set_fact: 
+        build_dir: "{{ build_dir }}/{{ inventory_hostname }}/tmp"
+        junos_conf: "{{ build_dir }}/{{ inventory_hostname}}/junos.conf"
+    - name: remove host build temp directory
+      file: path={{ build_dir }} state=absent
+    - name: create host build temp directory
+      file: path={{ build_dir }} state=directory
+    # - name: group by firewall role 
+    #   group_by: key=fw_role_{{ FW_role }}
+
+
+
+
+# # =========================================================
+# # Role based config template building
+# # =========================================================
+
+- name: Template-build routers
+  hosts: vsrx
+  connection: local
+  gather_facts: no
+  roles:
+    - router_baseconf
+    - router_ospf  
+    - router_bgp

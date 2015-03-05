@@ -1,0 +1,3 @@
+---
+- name: building ansible-user/NETCONF config
+  template: src=ansible_user.conf dest={{ build_dir }}/ansible_user.conf
